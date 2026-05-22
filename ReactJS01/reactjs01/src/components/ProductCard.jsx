@@ -1,12 +1,64 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { notification } from 'antd';
+import { ShoppingCartOutlined } from '@ant-design/icons';
+import { AuthContext } from './context/auth.context';
+import { useCart } from './context/cart.context';
+import axios from '../util/axios.customize';
 
 const ProductCard = ({ product }) => {
+    const { auth } = useContext(AuthContext);
+    const { fetchCart } = useCart();
     const discount = product.promotionalPrice && product.price
         ? Math.round((1 - product.promotionalPrice / product.price) * 100)
         : 0;
 
     const finalPrice = product.promotionalPrice || product.price;
+
+    const handleAddToCart = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!auth.isAuthenticated) {
+            notification.warning({
+                message: 'Vui lòng đăng nhập',
+                description: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng',
+            });
+            return;
+        }
+
+        if (product.stock === 0) {
+            notification.info({
+                message: 'Sản phẩm đã hết hàng',
+            });
+            return;
+        }
+
+        try {
+            const res = await axios.post('/v1/api/cart/add', {
+                productId: product._id,
+                quantity: 1
+            });
+            if (res && res.cart) {
+                notification.success({
+                    message: 'Đã thêm vào giỏ hàng!',
+                    description: product.name,
+                    placement: 'bottomRight',
+                });
+                fetchCart();
+            } else if (res && res.message) {
+                notification.error({
+                    message: 'Lỗi',
+                    description: res.message,
+                });
+            }
+        } catch (error) {
+            notification.error({
+                message: 'Lỗi',
+                description: 'Không thể thêm sản phẩm vào giỏ hàng',
+            });
+        }
+    };
 
     return (
         <Link
@@ -37,6 +89,15 @@ const ProductCard = ({ product }) => {
                         alt={product.name}
                         className="product-img"
                     />
+                    {/* Quick Add Button */}
+                    {product.stock > 0 && auth.isAuthenticated && (
+                        <button 
+                            className="quick-add-btn"
+                            onClick={handleAddToCart}
+                        >
+                            <ShoppingCartOutlined /> Thêm vào giỏ
+                        </button>
+                    )}
                 </div>
 
                 {/* Info */}
@@ -102,6 +163,7 @@ const ProductCard = ({ product }) => {
                     aspect-ratio: 1;
                     overflow: hidden;
                     display: flex; align-items: center; justify-content: center;
+                    position: relative;
                 }
                 .product-img {
                     width: 100%; height: 100%;
@@ -110,6 +172,35 @@ const ProductCard = ({ product }) => {
                     padding: 16px;
                 }
                 .product-card:hover .product-img { transform: scale(1.07); }
+
+                .quick-add-btn {
+                    position: absolute;
+                    bottom: 12px;
+                    left: 50%;
+                    transform: translateX(-50%) translateY(20px);
+                    opacity: 0;
+                    background: #2563eb;
+                    color: #fff;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 8px 16px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    transition: all 0.3s ease;
+                    white-space: nowrap;
+                    z-index: 3;
+                }
+                .product-card:hover .quick-add-btn {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0);
+                }
+                .quick-add-btn:hover {
+                    background: #1d4ed8;
+                }
 
                 .product-info {
                     padding: 16px;

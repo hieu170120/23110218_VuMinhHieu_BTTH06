@@ -49,6 +49,7 @@ const loginService = async (email1, password) => {
             } else {
                 // 3. Tạo Access Token (JWT)
                 const payload = {
+                    _id: user._id,
                     email: user.email,
                     name: user.name,
                     role: user.role

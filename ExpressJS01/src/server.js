@@ -5,6 +5,7 @@ const configViewEngine = require('./config/viewEngine');
 const apiRoutes = require('./routes/api');
 const connection = require('./config/database');
 const { getHomepage } = require('./controllers/homeController');
+const { startOrderCronJob } = require('./services/orderCronJob');
 const cors = require('cors');
 
 const app = express(); //cấu hình app là express
@@ -28,6 +29,9 @@ app.use('/v1/api/', apiRoutes);
     try {
         //kết nối database using mongoose
         await connection();
+        
+        // Khởi động CronJob tự động xác nhận đơn hàng sau 30 phút
+        startOrderCronJob(1);
         
         //lắng nghe port trong env
         app.listen(port, () => {

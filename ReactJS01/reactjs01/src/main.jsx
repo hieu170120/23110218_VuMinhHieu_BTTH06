@@ -13,7 +13,12 @@ import ProductDetail from './pages/product-detail.jsx';
 import SearchPage from './pages/search.jsx';
 import ProductManagement from './pages/admin/ProductManagement.jsx';
 import BannerManagement from './pages/admin/BannerManagement.jsx';
+import AdminOrderManagement from './pages/admin/AdminOrderManagement.jsx';
 import CategoryPage from './pages/CategoryPage.jsx';
+import CartPage from './pages/cart.jsx';
+import CheckoutPage from './pages/checkout.jsx';
+import OrderSuccessPage from './pages/order-success.jsx';
+import OrderHistoryPage from './pages/order-history.jsx';
 import { AuthWrapper } from './components/context/auth.context.jsx';
 import './styles/global.css';
 import './index.css';
@@ -39,12 +44,32 @@ const router = createBrowserRouter([
         element: <SearchPage />,
       },
       {
+        path: "cart",
+        element: <CartPage />,
+      },
+      {
+        path: "checkout",
+        element: <CheckoutPage />,
+      },
+      {
+        path: "order-success",
+        element: <OrderSuccessPage />,
+      },
+      {
+        path: "orders",
+        element: <OrderHistoryPage />,
+      },
+      {
         path: "admin/products",
         element: <ProductManagement />,
       },
       {
         path: "admin/banners",
         element: <BannerManagement />,
+      },
+      {
+        path: "admin/orders",
+        element: <AdminOrderManagement />,
       },
       {
         path: "category/:categoryId",

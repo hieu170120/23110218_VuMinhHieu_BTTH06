@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from '../util/axios.customize';
 import { Spin, notification, Button } from 'antd';
 import {
@@ -19,6 +19,7 @@ import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
 import ProductCard from '../components/ProductCard';
 import { AuthContext } from '../components/context/auth.context';
+import { useCart } from '../components/context/cart.context';
 
 /* ─── helpers ───────────────────────────────────────── */
 const fmt = (n) => n?.toLocaleString('vi-VN') ?? '—';
@@ -128,6 +129,7 @@ const btnStyle = (bg, color) => ({
 const ProductDetail = () => {
     const { id } = useParams();
     const { auth } = useContext(AuthContext);
+    const { fetchCart } = useCart();
     const isAdmin = auth?.user?.role === 'admin';
 
     const [loading, setLoading] = useState(true);
@@ -135,6 +137,7 @@ const ProductDetail = () => {
     const [quantity, setQuantity] = useState(1);
     const [thumbsSwiper, setThumbsSwiper] = useState(null);
     const [activeImg, setActiveImg] = useState(0);
+    const [addLoading, setAddLoading] = useState(false);
 
     const fetchProduct = async () => {
         setLoading(true);
@@ -150,12 +153,42 @@ const ProductDetail = () => {
         window.scrollTo(0, 0);
     }, [id]);
 
-    const handleAddToCart = () => {
-        notification.success({
-            message: 'Đã thêm vào giỏ hàng!',
-            description: `${quantity} × ${data.product.name}`,
-            placement: 'bottomRight',
-        });
+    const handleAddToCart = async () => {
+        if (!auth.isAuthenticated) {
+            notification.warning({
+                message: 'Vui lòng đăng nhập',
+                description: 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng',
+            });
+            return;
+        }
+
+        setAddLoading(true);
+        try {
+            const res = await axios.post('/v1/api/cart/add', {
+                productId: id,
+                quantity: quantity
+            });
+            if (res && res.cart) {
+                notification.success({
+                    message: 'Đã thêm vào giỏ hàng!',
+                    description: `${quantity} × ${data.product.name}`,
+                    placement: 'bottomRight',
+                });
+                fetchCart();
+            } else if (res && res.message) {
+                notification.error({
+                    message: 'Lỗi',
+                    description: res.message,
+                });
+            }
+        } catch (error) {
+            notification.error({
+                message: 'Lỗi',
+                description: 'Không thể thêm sản phẩm vào giỏ hàng',
+            });
+        } finally {
+            setAddLoading(false);
+        }
     };
 
     if (loading) return (
@@ -413,7 +446,7 @@ const ProductDetail = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0}
+                                disabled={product.stock === 0 || addLoading}
                                 style={{
                                     width: '100%', padding: '16px',
                                     background: product.stock === 0 ? '#e5e7eb' : '#2563eb',
@@ -428,7 +461,7 @@ const ProductDetail = () => {
                                 className="buy-btn"
                             >
                                 <ShoppingCartOutlined />
-                                {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
+                                {addLoading ? 'Đang thêm...' : (product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng')}
                             </button>
                             <button
                                 disabled={product.stock === 0}

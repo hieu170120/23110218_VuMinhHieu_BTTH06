@@ -4,7 +4,7 @@ import axios from '../util/axios.customize';
 import ProductCard from '../components/ProductCard';
 import { AuthContext } from '../components/context/auth.context';
 import { Spin } from 'antd';
-import { RightOutlined, ShoppingOutlined, FireOutlined, EyeOutlined, LeftOutlined } from '@ant-design/icons';
+import { RightOutlined, FireOutlined, EyeOutlined, LeftOutlined } from '@ant-design/icons';
 
 const SectionTitle = ({ title, sub, linkTo, linkLabel }) => (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '40px' }}>
@@ -167,6 +167,8 @@ const HomePage = () => {
     const [topSelling, setTopSelling] = useState([]);
     const [topViewed,  setTopViewed]  = useState([]);
 
+    const trackRef = useRef(null);
+
     useEffect(() => {
         const fetchHomeData = async () => {
             try {
@@ -190,6 +192,36 @@ const HomePage = () => {
         fetchHomeData();
     }, []);
 
+    // Auto-slide: translateX from 0 → -100% → back to 0
+    useEffect(() => {
+        if (banners.heroBanners.length < 2) return;
+        let offset = 0;
+        const total = banners.heroBanners.length;
+        const interval = setInterval(() => {
+            offset = (offset + 1) % (total + 1);
+            if (trackRef.current) {
+                trackRef.current.style.transition = 'transform 0.8s ease-in-out';
+                trackRef.current.style.transform = `translateX(-${offset * 100}%)`;
+            }
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [banners.heroBanners.length]);
+
+    const onTransitionEnd = () => {
+        if (!trackRef.current) return;
+        const total = banners.heroBanners.length;
+        const currentOffset = Math.abs(parseInt(getComputedStyle(trackRef.current).transform.split(',')[4]) || 0)
+            / (trackRef.current.scrollWidth / (total + 1));
+        if (currentOffset >= total) {
+            trackRef.current.style.transition = 'none';
+            trackRef.current.style.transform = 'translateX(0)';
+        }
+    };
+
+    const allSlides = banners.heroBanners.length > 0
+        ? [...banners.heroBanners, banners.heroBanners[0]]
+        : [];
+
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -198,95 +230,131 @@ const HomePage = () => {
         );
     }
 
-    const hero = banners.heroBanners?.[0] || {
-        title: "iPhone 15 Pro",
-        description: "Titan. Thật bền. Thật nhẹ. Thật Pro.",
-        imageUrl: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=2000&auto=format&fit=crop",
-        linkTo: "/search?category=iphone"
-    };
+    const hero = banners.heroBanners?.[0] || null;
 
     return (
         <div style={{ background: '#fff', minHeight: '100vh' }}>
 
-            {/* ── HERO ─────────────────────────────────────────── */}
+            {/* ── HERO SLIDING CAROUSEL ─────────────────────────── */}
             <section style={{
                 position: 'relative',
                 height: '88vh',
                 background: '#000',
                 overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
             }}>
-                <img
-                    src={hero.imageUrl}
-                    alt="Hero"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }}
-                />
-                {/* gradient overlay bottom */}
-                <div style={{
-                    position: 'absolute', bottom: 0, left: 0, right: 0, height: '200px',
-                    background: 'linear-gradient(to bottom, transparent, #000)',
-                }} />
-
-                <div style={{ position: 'relative', zIndex: 10, maxWidth: '700px', padding: '0 24px' }}>
-                    <p style={{
-                        color: '#60a5fa', fontSize: '14px', fontWeight: 700,
-                        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px',
-                    }}>
-                        Mới ra mắt
-                    </p>
-                    <h1 style={{
-                        fontSize: 'clamp(48px, 8vw, 80px)',
-                        fontWeight: 800,
-                        color: '#fff',
-                        letterSpacing: '-2px',
-                        lineHeight: 1.05,
-                        margin: '0 0 20px',
-                    }}>
-                        {hero.title}
-                    </h1>
-                    <p style={{ fontSize: '20px', color: '#d1d5db', marginBottom: '40px', fontWeight: 400 }}>
-                        {hero.description}
-                    </p>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
-                        <Link
-                            to={hero.linkTo || '/search'}
-                            style={{
-                                background: '#2563eb',
-                                color: '#fff',
-                                padding: '14px 32px',
-                                borderRadius: '9999px',
-                                fontWeight: 700,
-                                fontSize: '15px',
-                                textDecoration: 'none',
-                                display: 'flex', alignItems: 'center', gap: '8px',
-                                transition: 'background 0.2s, transform 0.2s',
-                            }}
-                            className="hero-btn-primary"
-                        >
-                            Mua ngay <ShoppingOutlined />
-                        </Link>
-                        <Link
-                            to={hero.linkTo || '/search'}
-                            style={{
-                                color: '#60a5fa',
-                                fontSize: '15px',
-                                fontWeight: 600,
-                                textDecoration: 'none',
-                                display: 'flex', alignItems: 'center', gap: '6px',
-                                padding: '14px 24px',
-                                border: '1.5px solid rgba(96,165,250,0.4)',
-                                borderRadius: '9999px',
-                                transition: 'border-color 0.2s, color 0.2s',
-                            }}
-                            className="hero-btn-ghost"
-                        >
-                            Tìm hiểu thêm <RightOutlined style={{ fontSize: '12px' }} />
-                        </Link>
-                    </div>
+                {/* Horizontal track */}
+                <div
+                    ref={trackRef}
+                    style={{
+                        display: 'flex',
+                        width: `${allSlides.length * 100}%`,
+                        height: '100%',
+                        transform: 'translateX(0)',
+                        transition: 'transform 0.8s ease-in-out',
+                    }}
+                    onTransitionEnd={onTransitionEnd}
+                >
+                    {allSlides.length > 0 ? (
+                        allSlides.map((hero, idx) => (
+                            <div
+                                key={hero._id || `slide-${idx}`}
+                                style={{
+                                    width: `${100 / allSlides.length}%`,
+                                    height: '100%',
+                                    position: 'relative',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                <img
+                                    src={hero.imageUrl}
+                                    alt={hero.title}
+                                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }}
+                                />
+                                <div style={{
+                                    position: 'absolute', bottom: 0, left: 0, right: 0, height: '200px',
+                                    background: 'linear-gradient(to bottom, transparent, #000)',
+                                }} />
+                                <div style={{ position: 'relative', zIndex: 10, maxWidth: '700px', padding: '0 24px', width: '100%' }}>
+                                    <p style={{
+                                        color: '#60a5fa', fontSize: '14px', fontWeight: 700,
+                                        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px',
+                                    }}>
+                                        Mới ra mắt
+                                    </p>
+                                    <h1 style={{
+                                        fontSize: 'clamp(48px, 8vw, 80px)',
+                                        fontWeight: 800,
+                                        color: '#fff',
+                                        letterSpacing: '-2px',
+                                        lineHeight: 1.05,
+                                        margin: '0 0 20px',
+                                    }}>
+                                        {hero.title}
+                                    </h1>
+                                    <p style={{ fontSize: '20px', color: '#d1d5db', marginBottom: '40px', fontWeight: 400 }}>
+                                        {hero.description}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                            <img
+                                src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=2000&auto=format&fit=crop"
+                                alt="Hero"
+                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }}
+                            />
+                            <div style={{
+                                position: 'absolute', bottom: 0, left: 0, right: 0, height: '200px',
+                                background: 'linear-gradient(to bottom, transparent, #000)',
+                            }} />
+                            <div style={{ position: 'relative', zIndex: 10, maxWidth: '700px', padding: '0 24px' }}>
+                                <p style={{
+                                    color: '#60a5fa', fontSize: '14px', fontWeight: 700,
+                                    letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px',
+                                }}>
+                                    Mới ra mắt
+                                </p>
+                                <h1 style={{
+                                    fontSize: 'clamp(48px, 8vw, 80px)',
+                                    fontWeight: 800, color: '#fff',
+                                    letterSpacing: '-2px', lineHeight: 1.05,
+                                    margin: '0 0 20px',
+                                }}>
+                                    iPhone 15 Pro
+                                </h1>
+                                <p style={{ fontSize: '20px', color: '#d1d5db', marginBottom: '40px', fontWeight: 400 }}>
+                                    Titan. Thật bền. Thật nhẹ. Thật Pro.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
+                {/* Navigation dots */}
+                {banners.heroBanners.length > 1 && (
+                    <div style={{
+                        position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
+                        display: 'flex', gap: '10px', zIndex: 20,
+                    }}>
+                        {banners.heroBanners.map((_, idx) => (
+                            <div
+                                key={idx}
+                                style={{
+                                    width: '10px',
+                                    height: '10px',
+                                    borderRadius: '9999px',
+                                    background: 'rgba(255,255,255,0.4)',
+                                    transition: 'background 0.3s',
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {/* scroll indicator */}
                 <div style={{
@@ -378,7 +446,7 @@ const HomePage = () => {
                                 <h3 style={{ fontSize: '26px', fontWeight: 800, color: '#111', margin: '0 0 12px' }}>MacBook Air M3</h3>
                                 <p style={{ fontSize: '16px', color: '#555', marginBottom: '28px' }}>Siêu mỏng. Siêu mạnh. Siêu M3.</p>
                                 <Link
-                                    to="/search?category=mac"
+                                    to="/search?category=laptop"
                                     style={{
                                         background: '#111',
                                         color: '#fff',
@@ -405,44 +473,6 @@ const HomePage = () => {
                             </div>
 
                             {/* Apple Watch Fallback */}
-                            <div style={{
-                                background: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a2e 100%)',
-                                borderRadius: '28px',
-                                padding: '48px 40px',
-                                textAlign: 'center',
-                                minHeight: '420px',
-                                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                                overflow: 'hidden',
-                                position: 'relative',
-                            }} className="banner-card">
-                                <h3 style={{ fontSize: '26px', fontWeight: 800, color: '#60a5fa', margin: '0 0 12px' }}>Apple Watch Ultra 2</h3>
-                                <p style={{ fontSize: '16px', color: '#9ca3af', marginBottom: '28px' }}>Cuộc phiêu lưu cấp độ mới.</p>
-                                <Link
-                                    to="/search?category=watch"
-                                    style={{
-                                        background: '#fff',
-                                        color: '#111',
-                                        padding: '12px 28px',
-                                        borderRadius: '9999px',
-                                        fontWeight: 700,
-                                        fontSize: '14px',
-                                        textDecoration: 'none',
-                                        transition: 'background 0.2s',
-                                        zIndex: 2,
-                                    }}
-                                >
-                                    Mua ngay
-                                </Link>
-                                <img
-                                    src="https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?q=80&w=800&auto=format&fit=crop"
-                                    alt="Watch"
-                                    style={{
-                                        width: '60%', marginTop: '24px', opacity: 0.75,
-                                        transition: 'transform 0.6s ease',
-                                    }}
-                                    className="banner-img"
-                                />
-                            </div>
                         </>
                     )}
                 </section>
@@ -553,8 +583,6 @@ const HomePage = () => {
             </section>
 
             <style>{`
-                .hero-btn-primary:hover { background: #1d4ed8 !important; transform: scale(1.02); }
-                .hero-btn-ghost:hover { border-color: #60a5fa !important; color: #93c5fd !important; }
                 .see-all-link:hover { border-bottom-color: #2563eb !important; }
                 .banner-card:hover .banner-img { transform: scale(1.04) translateY(-4px); }
                 .support-card {
@@ -576,6 +604,9 @@ const HomePage = () => {
                     color: #fff !important;
                     border-color: #2563eb !important;
                     transform: translateY(-50%) scale(1.1);
+                }
+                .hero-arrow-btn:hover {
+                    background: rgba(255,255,255,0.3) !important;
                 }
                 @keyframes scrollLine {
                     0%   { opacity: 0; transform: scaleY(0); transform-origin: top; }
