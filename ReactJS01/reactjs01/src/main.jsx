@@ -19,9 +19,11 @@ import CartPage from './pages/cart.jsx';
 import CheckoutPage from './pages/checkout.jsx';
 import OrderSuccessPage from './pages/order-success.jsx';
 import OrderHistoryPage from './pages/order-history.jsx';
-import { AuthWrapper } from './components/context/auth.context.jsx';
+import { Provider } from 'react-redux';
+import { store } from './store/index.js';
 import './styles/global.css';
 import './index.css';
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -89,8 +91,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthWrapper>
+    <Provider store={store}>
       <RouterProvider router={router} />
-    </AuthWrapper>
+    </Provider>
   </React.StrictMode>,
 )

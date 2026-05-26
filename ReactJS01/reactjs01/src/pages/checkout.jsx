@@ -1,18 +1,19 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, message, Radio, Divider, Card, Row, Col, Spin } from 'antd';
 import { EnvironmentOutlined, PhoneOutlined, UserOutlined, CreditCardOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
-import { useCart } from '../components/context/cart.context';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuth } from '../store/authSlice';
+import { selectCart, setCart } from '../store/cartSlice';
 import { createOrderApi } from '../util/api';
 
 const { TextArea } = Input;
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const { auth } = useContext(AuthContext);
-    const { cart, setCart, fetchCart } = useCart();
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
+    const cart = useSelector(selectCart);
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('COD');
@@ -55,8 +56,7 @@ const CheckoutPage = () => {
             const res = await createOrderApi(orderData);
 
             if (res && res.order) {
-                // Cập nhật cart context
-                setCart({ items: [], totalAmount: 0 });
+                dispatch(setCart({ items: [], totalAmount: 0 }));
                 message.success('Đặt hàng thành công!');
                 navigate('/order-success', { state: { order: res.order } });
             } else if (res && res.message) {

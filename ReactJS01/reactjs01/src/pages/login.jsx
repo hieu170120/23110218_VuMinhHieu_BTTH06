@@ -1,13 +1,15 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Button, Col, Divider, Form, Input, notification, Row } from 'antd';
 import { loginApi } from '../util/api';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
+import { useDispatch, useSelector } from 'react-redux';
+import { login, selectAuth } from '../store/authSlice';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { setAuth } = useContext(AuthContext);
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
 
     const onFinish = async (values) => {
         const { email, password } = values;
@@ -16,20 +18,18 @@ const LoginPage = () => {
 
         if (res && res.EC === 0) {
             localStorage.setItem("access_token", res.access_token);
-            notification.success({
-                message: "LOGIN USER",
-                description: "Success"
-            });
-            setAuth({
-                isAuthenticated: true,
+            dispatch(login({
                 user: {
                     email: res?.user?.email ?? "",
                     name: res?.user?.name ?? "",
                     role: res?.user?.role ?? ""
                 }
-            })
+            }));
+            notification.success({
+                message: "LOGIN USER",
+                description: "Success"
+            });
             navigate("/");
-
         } else {
             notification.error({
                 message: "LOGIN USER",

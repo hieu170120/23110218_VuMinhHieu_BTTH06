@@ -1,14 +1,15 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { notification } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
-import { AuthContext } from './context/auth.context';
-import { useCart } from './context/cart.context';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuth } from '../store/authSlice';
+import { fetchCart } from '../store/cartSlice';
 import axios from '../util/axios.customize';
 
 const ProductCard = ({ product }) => {
-    const { auth } = useContext(AuthContext);
-    const { fetchCart } = useCart();
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
     const discount = product.promotionalPrice && product.price
         ? Math.round((1 - product.promotionalPrice / product.price) * 100)
         : 0;
@@ -45,7 +46,7 @@ const ProductCard = ({ product }) => {
                     description: product.name,
                     placement: 'bottomRight',
                 });
-                fetchCart();
+                dispatch(fetchCart());
             } else if (res && res.message) {
                 notification.error({
                     message: 'Lỗi',
@@ -66,7 +67,6 @@ const ProductCard = ({ product }) => {
             style={{ textDecoration: 'none', display: 'flex', height: '100%' }}
         >
             <div className="product-card">
-                {/* Badges */}
                 <div className="product-badges">
                     {discount > 0 && (
                         <span className="badge badge-red">-{discount}%</span>
@@ -80,7 +80,6 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
 
-                {/* Image */}
                 <div className="product-img-wrap">
                     <img
                         src={product.images && product.images.length > 0
@@ -89,7 +88,6 @@ const ProductCard = ({ product }) => {
                         alt={product.name}
                         className="product-img"
                     />
-                    {/* Quick Add Button */}
                     {product.stock > 0 && auth.isAuthenticated && (
                         <button 
                             className="quick-add-btn"
@@ -100,7 +98,6 @@ const ProductCard = ({ product }) => {
                     )}
                 </div>
 
-                {/* Info */}
                 <div className="product-info">
                     <h3 className="product-name">{product.name}</h3>
 

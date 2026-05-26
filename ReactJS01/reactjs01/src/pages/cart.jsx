@@ -1,15 +1,18 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { Table, Button, InputNumber, Popconfirm, message, Empty, Spin } from 'antd';
 import { DeleteOutlined, ShoppingOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
-import { useCart } from '../components/context/cart.context';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuth } from '../store/authSlice';
+import { selectCart, selectCartCount, setCart, fetchCart } from '../store/cartSlice';
 import { addToCartApi, updateCartApi, removeFromCartApi, clearCartApi } from '../util/api';
 
 const CartPage = () => {
     const navigate = useNavigate();
-    const { auth } = useContext(AuthContext);
-    const { cart, cartCount, fetchCart, setCart } = useCart();
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
+    const cart = useSelector(selectCart);
+    const cartCount = useSelector(selectCartCount);
     const [loading, setLoading] = useState(false);
     const [buttonLoading, setButtonLoading] = useState({});
 
@@ -35,7 +38,7 @@ const CartPage = () => {
         try {
             const res = await updateCartApi(productId, quantity);
             if (res && res.cart) {
-                setCart(res.cart);
+                dispatch(setCart(res.cart));
                 message.success('Cập nhật số lượng thành công');
             } else if (res && res.message) {
                 message.error(res.message);
@@ -52,7 +55,7 @@ const CartPage = () => {
         try {
             const res = await removeFromCartApi(productId);
             if (res && res.cart) {
-                setCart(res.cart);
+                dispatch(setCart(res.cart));
                 message.success('Đã xóa sản phẩm khỏi giỏ hàng');
             } else if (res && res.message) {
                 message.error(res.message);
@@ -69,7 +72,7 @@ const CartPage = () => {
         try {
             const res = await clearCartApi();
             if (res && res.cart) {
-                setCart(res.cart);
+                dispatch(setCart(res.cart));
                 message.success('Đã xóa toàn bộ giỏ hàng');
             }
         } catch (error) {

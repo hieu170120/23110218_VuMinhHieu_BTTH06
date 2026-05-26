@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from '../util/axios.customize';
 import { Spin, notification, Button } from 'antd';
@@ -18,10 +18,10 @@ import 'swiper/css/pagination';
 import 'swiper/css/thumbs';
 import 'swiper/css/free-mode';
 import ProductCard from '../components/ProductCard';
-import { AuthContext } from '../components/context/auth.context';
-import { useCart } from '../components/context/cart.context';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuth } from '../store/authSlice';
+import { fetchCart } from '../store/cartSlice';
 
-/* ─── helpers ───────────────────────────────────────── */
 const fmt = (n) => n?.toLocaleString('vi-VN') ?? '—';
 
 const StockBadge = ({ stock }) => {
@@ -42,7 +42,6 @@ const StockBadge = ({ stock }) => {
     );
 };
 
-/* ─── Admin Stats Panel ──────────────────────────────── */
 const AdminPanel = ({ product, onSaveSuccess }) => {
     const [editStock, setEditStock] = useState(product.stock);
     const [editSold, setEditSold] = useState(product.sold);
@@ -89,7 +88,6 @@ const AdminPanel = ({ product, onSaveSuccess }) => {
                 </Button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                {/* Tồn kho */}
                 <div style={{ background: '#fff', borderRadius: '12px', padding: '16px', border: '1px solid #fde68a' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                         <InboxOutlined style={{ color: '#d97706' }} />
@@ -101,7 +99,6 @@ const AdminPanel = ({ product, onSaveSuccess }) => {
                         <button onClick={() => setEditStock(s => s + 1)} style={btnStyle('#d1fae5', '#059669')}>+</button>
                     </div>
                 </div>
-                {/* Đã bán */}
                 <div style={{ background: '#fff', borderRadius: '12px', padding: '16px', border: '1px solid #fde68a' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                         <BarChartOutlined style={{ color: '#d97706' }} />
@@ -125,11 +122,11 @@ const btnStyle = (bg, color) => ({
     alignItems: 'center', justifyContent: 'center',
 });
 
-/* ─── Main Component ──────────────────────────────────── */
 const ProductDetail = () => {
     const { id } = useParams();
-    const { auth } = useContext(AuthContext);
-    const { fetchCart } = useCart();
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
     const isAdmin = auth?.user?.role === 'admin';
 
     const [loading, setLoading] = useState(true);
@@ -174,7 +171,7 @@ const ProductDetail = () => {
                     description: `${quantity} × ${data.product.name}`,
                     placement: 'bottomRight',
                 });
-                fetchCart();
+                dispatch(fetchCart());
             } else if (res && res.message) {
                 notification.error({
                     message: 'Lỗi',
@@ -214,7 +211,6 @@ const ProductDetail = () => {
     return (
         <div style={{ background: '#f8f9fb', minHeight: '100vh' }}>
 
-            {/* ── Breadcrumb ─────────────────────────────── */}
             <div style={{ background: '#fff', borderBottom: '1px solid #f0f0f0', padding: '14px 0' }}>
                 <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#9ca3af' }}>
@@ -235,15 +231,12 @@ const ProductDetail = () => {
                 </div>
             </div>
 
-            {/* ── Main Grid ──────────────────────────────── */}
             <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '40px 24px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', marginBottom: '80px' }}>
 
-                    {/* ── LEFT: Image Gallery ─────────────── */}
                     <div style={{ position: 'sticky', top: '80px', alignSelf: 'flex-start' }}>
                         {images.length > 0 ? (
                             <>
-                                {/* Main Swiper */}
                                 <div style={{ borderRadius: '24px', overflow: 'hidden', background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', marginBottom: '12px' }}>
                                     <Swiper
                                         modules={[Navigation, Pagination, Thumbs, FreeMode]}
@@ -264,7 +257,6 @@ const ProductDetail = () => {
                                     </Swiper>
                                 </div>
 
-                                {/* Thumb strip (chỉ hiện nếu > 1 ảnh) */}
                                 {images.length > 1 && (
                                     <Swiper
                                         onSwiper={setThumbsSwiper}
@@ -292,7 +284,6 @@ const ProductDetail = () => {
                                     </Swiper>
                                 )}
 
-                                {/* Image count indicator */}
                                 <p style={{ textAlign: 'center', fontSize: '12px', color: '#9ca3af', marginTop: '8px' }}>
                                     {images.length} hình ảnh
                                 </p>
@@ -308,14 +299,11 @@ const ProductDetail = () => {
                         )}
                     </div>
 
-                    {/* ── RIGHT: Product Info ─────────────── */}
                     <div>
-                        {/* Admin Panel */}
                         {isAdmin && (
                             <AdminPanel product={product} onSaveSuccess={fetchProduct} />
                         )}
 
-                        {/* Category badge */}
                         <Link
                             to={`/search?category=${product.category?.name?.toLowerCase()}`}
                             style={{
@@ -331,12 +319,10 @@ const ProductDetail = () => {
                             <TagOutlined /> {product.category?.name || 'Danh mục'}
                         </Link>
 
-                        {/* Title */}
                         <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#111', lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-0.5px' }}>
                             {product.name}
                         </h1>
 
-                        {/* Stats row */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
                             <StockBadge stock={product.stock} />
 
@@ -353,7 +339,6 @@ const ProductDetail = () => {
                             )}
                         </div>
 
-                        {/* Price box */}
                         <div style={{
                             background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
                             borderRadius: '20px', padding: '24px 28px', marginBottom: '28px',
@@ -390,7 +375,6 @@ const ProductDetail = () => {
                             <p style={{ color: '#64748b', fontSize: '12px', margin: '4px 0 0' }}>* Giá đã bao gồm thuế VAT</p>
                         </div>
 
-                        {/* Quantity selector */}
                         {product.stock > 0 && (
                             <div style={{ marginBottom: '24px' }}>
                                 <p style={{ fontSize: '12px', fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
@@ -442,7 +426,6 @@ const ProductDetail = () => {
                             </div>
                         )}
 
-                        {/* CTA buttons */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                             <button
                                 onClick={handleAddToCart}
@@ -480,7 +463,6 @@ const ProductDetail = () => {
                             </button>
                         </div>
 
-                        {/* Benefits */}
                         <div style={{
                             display: 'grid', gridTemplateColumns: '1fr 1fr',
                             gap: '12px', paddingTop: '24px',
@@ -511,7 +493,6 @@ const ProductDetail = () => {
                     </div>
                 </div>
 
-                {/* ── Description ──────────────────────────── */}
                 <section style={{
                     background: '#fff', borderRadius: '24px',
                     padding: '48px', marginBottom: '64px',
@@ -526,7 +507,6 @@ const ProductDetail = () => {
                     </div>
                 </section>
 
-                {/* ── Similar Products ──────────────────────── */}
                 {similarProducts.length > 0 && (
                     <section>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>

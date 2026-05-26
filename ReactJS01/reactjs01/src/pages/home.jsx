@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from '../util/axios.customize';
 import ProductCard from '../components/ProductCard';
-import { AuthContext } from '../components/context/auth.context';
 import { Spin } from 'antd';
 import { RightOutlined, FireOutlined, EyeOutlined, LeftOutlined } from '@ant-design/icons';
 
@@ -50,10 +49,9 @@ const ProductGrid = ({ products }) => (
     </div>
 );
 
-/* ── Horizontal Product Slider ─────────────────────────────────── */
 const ProductSlider = ({ products, icon: Icon, accentColor }) => {
     const trackRef = useRef(null);
-    const CARD_W = 240; // px
+    const CARD_W = 240;
     const GAP    = 16;
 
     const scroll = (dir) => {
@@ -66,7 +64,6 @@ const ProductSlider = ({ products, icon: Icon, accentColor }) => {
 
     return (
         <div style={{ position: 'relative' }}>
-            {/* Prev button */}
             <button
                 onClick={() => scroll('prev')}
                 className="slider-btn slider-btn-prev"
@@ -83,7 +80,6 @@ const ProductSlider = ({ products, icon: Icon, accentColor }) => {
                 <LeftOutlined />
             </button>
 
-            {/* Track */}
             <div
                 ref={trackRef}
                 style={{
@@ -109,7 +105,6 @@ const ProductSlider = ({ products, icon: Icon, accentColor }) => {
                         }}
                     >
                         <ProductCard product={product} />
-                        {/* Rank badge — bottom-left corner */}
                         <div style={{
                             position: 'absolute',
                             bottom: '60px', left: '12px',
@@ -130,7 +125,6 @@ const ProductSlider = ({ products, icon: Icon, accentColor }) => {
                 ))}
             </div>
 
-            {/* Next button */}
             <button
                 onClick={() => scroll('next')}
                 className="slider-btn slider-btn-next"
@@ -151,7 +145,6 @@ const ProductSlider = ({ products, icon: Icon, accentColor }) => {
 };
 
 const HomePage = () => {
-    const { auth } = useContext(AuthContext);
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({
         latestProducts: [],
@@ -192,7 +185,6 @@ const HomePage = () => {
         fetchHomeData();
     }, []);
 
-    // Auto-slide: translateX from 0 → -100% → back to 0
     useEffect(() => {
         if (banners.heroBanners.length < 2) return;
         let offset = 0;
@@ -235,14 +227,12 @@ const HomePage = () => {
     return (
         <div style={{ background: '#fff', minHeight: '100vh' }}>
 
-            {/* ── HERO SLIDING CAROUSEL ─────────────────────────── */}
             <section style={{
                 position: 'relative',
                 height: '88vh',
                 background: '#000',
                 overflow: 'hidden',
             }}>
-                {/* Horizontal track */}
                 <div
                     ref={trackRef}
                     style={{
@@ -335,7 +325,6 @@ const HomePage = () => {
                     )}
                 </div>
 
-                {/* Navigation dots */}
                 {banners.heroBanners.length > 1 && (
                     <div style={{
                         position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)',
@@ -356,7 +345,6 @@ const HomePage = () => {
                     </div>
                 )}
 
-                {/* scroll indicator */}
                 <div style={{
                     position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 10,
@@ -369,10 +357,8 @@ const HomePage = () => {
                 </div>
             </section>
 
-            {/* ── MAIN CONTENT ─────────────────────────────────── */}
             <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '80px 24px' }}>
 
-                {/* Ưu đãi cực sốc */}
                 {data.promotionalProducts?.length > 0 && (
                     <section style={{ marginBottom: '96px' }}>
                         <SectionTitle
@@ -385,7 +371,6 @@ const HomePage = () => {
                     </section>
                 )}
 
-                {/* Banner 2-col */}
                 <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '96px' }}>
                     {banners.subBanners?.length > 0 ? (
                         banners.subBanners.slice(0, 2).map((sub, idx) => (
@@ -432,7 +417,6 @@ const HomePage = () => {
                         ))
                     ) : (
                         <>
-                            {/* MacBook Fallback */}
                             <div style={{
                                 background: '#f5f5f7',
                                 borderRadius: '28px',
@@ -471,13 +455,10 @@ const HomePage = () => {
                                     className="banner-img"
                                 />
                             </div>
-
-                            {/* Apple Watch Fallback */}
                         </>
                     )}
                 </section>
 
-                {/* Mới nhất */}
                 {data.latestProducts?.length > 0 && (
                     <section style={{ marginBottom: '96px' }}>
                         <SectionTitle
@@ -489,7 +470,6 @@ const HomePage = () => {
                     </section>
                 )}
 
-                {/* Được yêu thích */}
                 {data.bestSellingProducts?.length > 0 && (
                     <section style={{
                         background: 'linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)',
@@ -507,7 +487,6 @@ const HomePage = () => {
                     </section>
                 )}
 
-                {/* 🔥 Top 10 Bán Chạy */}
                 {topSelling.length > 0 && (
                     <section style={{ marginBottom: '96px' }}>
                         <SectionTitle
@@ -529,7 +508,6 @@ const HomePage = () => {
                     </section>
                 )}
 
-                {/* 👁 Top 10 Xem Nhiều Nhất */}
                 {topViewed.length > 0 && (
                     <section style={{
                         background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
@@ -557,7 +535,6 @@ const HomePage = () => {
                 )}
             </div>
 
-            {/* ── SUPPORT CTA ───────────────────────────────────── */}
             <section style={{
                 borderTop: '1px solid #f0f0f0',
                 padding: '80px 24px',

@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/auth.context';
-import { useCart } from '../context/cart.context';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectAuth, logout } from '../../store/authSlice';
+import { selectCartCount } from '../../store/cartSlice';
 import { ShoppingCartOutlined, UserOutlined, SearchOutlined, DownOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 
 const navLinks = [
@@ -12,8 +13,9 @@ const navLinks = [
 
 const Header = () => {
     const navigate = useNavigate();
-    const { auth, setAuth } = useContext(AuthContext);
-    const { cartCount } = useCart();
+    const dispatch = useDispatch();
+    const auth = useSelector(selectAuth);
+    const cartCount = useSelector(selectCartCount);
     const [scrolled, setScrolled] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
@@ -24,7 +26,6 @@ const Header = () => {
         return () => window.removeEventListener('scroll', onScroll);
     }, []);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -36,8 +37,7 @@ const Header = () => {
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('access_token');
-        setAuth({ isAuthenticated: false, user: { email: '', name: '', role: '' } });
+        dispatch(logout());
         setShowDropdown(false);
         navigate('/');
     };
@@ -57,7 +57,6 @@ const Header = () => {
                 color: '#fff',
             }}
         >
-            {/* 3-column grid: logo | nav | actions */}
             <div
                 style={{
                     display: 'grid',
@@ -69,7 +68,6 @@ const Header = () => {
                     padding: '0 24px',
                 }}
             >
-                {/* ── Column 1: Logo (left) */}
                 <Link
                     to="/"
                     style={{
@@ -85,7 +83,6 @@ const Header = () => {
                     TechStore
                 </Link>
 
-                {/* ── Column 2: Nav (center) */}
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
                     {navLinks.map(({ label, href }) => (
                         <Link
@@ -109,7 +106,6 @@ const Header = () => {
                     ))}
                 </nav>
 
-                {/* ── Column 3: Icons (right) */}
                 <div
                     style={{
                         justifySelf: 'end',
@@ -152,7 +148,6 @@ const Header = () => {
                         </span>
                     </div>
 
-                    {/* User Dropdown */}
                     <div ref={dropdownRef} style={{ position: 'relative' }}>
                         <div
                             onClick={() => setShowDropdown(!showDropdown)}
@@ -178,7 +173,6 @@ const Header = () => {
                             <DownOutlined style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                         </div>
 
-                        {/* Dropdown Menu */}
                         <div
                             style={{
                                 position: 'absolute',
@@ -199,7 +193,6 @@ const Header = () => {
                         >
                             {auth.isAuthenticated ? (
                                 <>
-                                    {/* User info header */}
                                     <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', marginBottom: '8px' }}>
                                         <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#111' }}>
                                             {auth.user.name || 'User'}
@@ -269,7 +262,6 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Inline styles for hover & dropdown */}
             <style>{`
                 .nav-link:hover { color: #fff !important; }
                 .nav-link::after {

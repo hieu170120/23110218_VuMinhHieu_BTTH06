@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Tag, Button, Modal, Descriptions, Empty, Spin, Popconfirm, message, Input, Timeline, Tabs, Badge, Typography, Divider, List, Row, Col, Space } from 'antd';
 import { 
     EyeOutlined, CloseCircleOutlined, HistoryOutlined, 
@@ -7,7 +7,8 @@ import {
     BellOutlined, SendOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../components/context/auth.context';
+import { useSelector } from 'react-redux';
+import { selectAuth } from '../store/authSlice';
 import { getOrdersApi, cancelOrderApi } from '../util/api';
 
 const { Title, Text, Paragraph } = Typography;
@@ -61,7 +62,7 @@ const PAYMENT_METHOD_LABELS = {
 
 const OrderHistoryPage = () => {
     const navigate = useNavigate();
-    const { auth } = useContext(AuthContext);
+    const auth = useSelector(selectAuth);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
@@ -121,12 +122,10 @@ const OrderHistoryPage = () => {
         const now = Date.now();
         const timeDiffMinutes = (now - createdTime) / (1000 * 60);
         
-        // Trong 30 phút và status là pending/confirmed
         if (['pending', 'confirmed'].includes(order.orderStatus) && timeDiffMinutes <= 30) {
             return true;
         }
         
-        // Shop đang chuẩn bị -> chỉ gửi yêu cầu hủy
         if (order.orderStatus === 'shop_preparing') {
             return 'request_only';
         }
@@ -270,7 +269,6 @@ const OrderHistoryPage = () => {
                     </Space>
                 </div>
 
-                {/* Cancellation Request Status */}
                 {order.cancellationRequest?.status === 'pending' && (
                     <div style={{ 
                         marginTop: 16, 
@@ -317,7 +315,6 @@ const OrderHistoryPage = () => {
                     </div>
                 </div>
 
-                {/* Timeline Progress */}
                 <div style={{ marginBottom: 24 }}>
                     <Title level={5}>Tiến trình đơn hàng</Title>
                     <Timeline
@@ -342,7 +339,6 @@ const OrderHistoryPage = () => {
 
                 <Divider />
 
-                {/* Shipping Info */}
                 <Descriptions title="Thông tin giao hàng" column={2} size="small" bordered>
                     <Descriptions.Item label="Người nhận">
                         {selectedOrder.shippingAddress?.fullName}
@@ -363,7 +359,6 @@ const OrderHistoryPage = () => {
                     )}
                 </Descriptions>
 
-                {/* Payment Info */}
                 <Descriptions title="Thông tin thanh toán" column={2} size="small" style={{ marginTop: 16 }}>
                     <Descriptions.Item label="Phương thức">
                         {PAYMENT_METHOD_LABELS[selectedOrder.paymentMethod] || selectedOrder.paymentMethod}
@@ -375,7 +370,6 @@ const OrderHistoryPage = () => {
                     </Descriptions.Item>
                 </Descriptions>
 
-                {/* Products */}
                 <div style={{ marginTop: 24 }}>
                     <Title level={5}>Sản phẩm đã đặt ({selectedOrder.items?.length})</Title>
                     {selectedOrder.items?.map((item, index) => (
@@ -413,7 +407,6 @@ const OrderHistoryPage = () => {
                     ))}
                 </div>
 
-                {/* Total */}
                 <div style={{ 
                     display: 'flex', 
                     justifyContent: 'flex-end',
@@ -429,7 +422,6 @@ const OrderHistoryPage = () => {
                     </div>
                 </div>
 
-                {/* Order History */}
                 {selectedOrder.statusHistory?.length > 0 && (
                     <div style={{ marginTop: 24 }}>
                         <Title level={5}>Lịch sử đơn hàng</Title>
@@ -456,7 +448,6 @@ const OrderHistoryPage = () => {
                     </div>
                 )}
 
-                {/* Cancellation Request Info */}
                 {selectedOrder.cancellationRequest?.status === 'pending' && (
                     <div style={{ 
                         marginTop: 24, 
@@ -500,7 +491,6 @@ const OrderHistoryPage = () => {
                 </h1>
             </div>
 
-            {/* Tabs */}
             <Tabs 
                 activeKey={activeTab} 
                 onChange={setActiveTab}
@@ -533,7 +523,6 @@ const OrderHistoryPage = () => {
                 )}
             </Card>
 
-            {/* Order Detail Modal */}
             <Modal
                 title={`Chi tiết đơn hàng #${selectedOrder?._id?.slice(-8).toUpperCase()}`}
                 open={isDetailModalVisible}
@@ -561,7 +550,6 @@ const OrderHistoryPage = () => {
                 {renderOrderDetail()}
             </Modal>
 
-            {/* Cancel Order Modal */}
             <Modal
                 title={canCancelOrder(selectedOrder) === 'request_only' ? "Yêu cầu hủy đơn hàng" : "Hủy đơn hàng"}
                 open={isCancelModalVisible}
